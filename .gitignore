@@ -29,6 +29,22 @@ bin/
 *.log
 *.db
 
+config.properties
+*.properties
+!config.properties.template
+
+out/
+build/
+target/
+bin/
+
+.idea/
+*.iml
+.vscode/
+
+*.log
+
+
 ### VS Code ###
 .vscode/
 

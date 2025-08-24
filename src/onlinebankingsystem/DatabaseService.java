@@ -4,12 +4,75 @@ import javafx.collections.FXCollections;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
+import java.io.File;
+import java.io.InputStream;
 
 
 public class DatabaseService {
-    private static final String URL = "jdbc:mysql://localhost:3306/online_banking_system";
-    private static final String USER = "root";
-    private static final String PASSWORD = "PQZMtrewq321!";
+    private String URL ;
+    private String USER ;
+    private String PASSWORD ;
+
+    public DatabaseService() {
+        loadDatabaseProperties();
+    }
+
+    private void loadDatabaseProperties() {
+        Properties props = new Properties();
+        try {
+            // First try to load from the project root directory
+            File configFile = new File("config.properties");
+            if (configFile.exists()) {
+                try (FileInputStream fis = new FileInputStream(configFile)) {
+                    props.load(fis);
+                    System.out.println("Loaded config from file: " + configFile.getAbsolutePath());
+                }
+            } else {
+                // Fallback to classpath resource (useful for tests or when running from JAR)
+                try (InputStream is = getClass().getClassLoader().getResourceAsStream("config.properties")) {
+                    if (is != null) {
+                        props.load(is);
+                        System.out.println("Loaded config from classpath");
+                    } else {
+                        System.err.println("Could not find config.properties in classpath");
+                    }
+                }
+            }
+
+            // Load the properties
+            this.URL = props.getProperty("db.URL");
+            this.USER = props.getProperty("db.USER");
+            this.PASSWORD = props.getProperty("db.PASSWORD");
+
+            // Log loaded properties (for debugging, remove in production)
+            System.out.println("Database URL: " + this.URL);
+            System.out.println("Database User: " + this.USER);
+            // Don't log the password!
+
+            // Check if properties were loaded
+            if (this.URL == null || this.USER == null || this.PASSWORD == null) {
+                System.err.println("One or more database properties not found in config file");
+                // Fallback to hardcoded values for development only (remove in production)
+                this.URL = "jdbc:mysql://localhost:3306/online_banking_system";
+                this.USER = "root";
+                this.PASSWORD = ""; // Don't include your real password here
+            }
+        } catch (IOException e) {
+            System.err.println("Failed to load database properties: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback to hardcoded values for development only
+            this.URL = "jdbc:mysql://localhost:3306/online_banking_system";
+            this.USER = "root";
+            this.PASSWORD = ""; // Don't include your real password here
+        }
+    }
+
 
     // Get connection to database
     private Connection getConnection() throws SQLException {
@@ -287,8 +350,35 @@ public class DatabaseService {
         return loans;
     }
 
-    // Take loan using stored procedure
     public boolean takeLoan(Long customerId, Long amount, Integer branchId) {
+        // First check if customer has a loan account, create one if not
+        boolean loanAccountExists = false;
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT account_id FROM account WHERE customer_id = ? AND type = 'LOAN'")) {
+
+            pstmt.setLong(1, customerId);
+            ResultSet rs = pstmt.executeQuery();
+            loanAccountExists = rs.next();
+
+            // If no loan account exists, create one
+            if (!loanAccountExists) {
+                System.out.println("No loan account found for customer " + customerId + ". Creating one.");
+                try (PreparedStatement createStmt = conn.prepareStatement(
+                        "INSERT INTO account (customer_id, balance, status, type) VALUES (?, 0, 'active', 'LOAN')")) {
+                    createStmt.setLong(1, customerId);
+                    createStmt.executeUpdate();
+                    System.out.println("Loan account created for customer " + customerId);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking/creating loan account: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+
+        // Now proceed with taking the loan
         try (Connection conn = getConnection();
              CallableStatement cstmt = conn.prepareCall("{CALL TakeLoan(?, ?, ?)}")) {
 
@@ -297,23 +387,37 @@ public class DatabaseService {
             cstmt.setInt(3, branchId);
 
             cstmt.execute();
+            System.out.println("Loan successfully created for customer " + customerId + " with amount " + amount);
             return true;
         } catch (SQLException e) {
             System.err.println("Error taking loan: " + e.getMessage());
+
+            // Check for specific error conditions from the stored procedure
+            if (e.getMessage().contains("No LOAN account found")) {
+                System.err.println("No loan account found for the customer despite our attempt to create one");
+            } else if (e.getMessage().contains("Invalid customer ID")) {
+                System.err.println("Invalid customer ID: " + customerId);
+            }
+
+            e.printStackTrace();
             return false;
         }
     }
 
-    // Add this to DatabaseService class
+
     public List<Loan> getAllLoans() {
         List<Loan> loans = FXCollections.observableArrayList();
         String sql = "SELECT * FROM loans";
+
+        System.out.println("Attempting to retrieve all loans...");
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
+            int count = 0;
             while (rs.next()) {
+                count++;
                 Loan loan = new Loan(
                         rs.getLong("loan_id"),
                         rs.getLong("cust_id"),
@@ -321,13 +425,22 @@ public class DatabaseService {
                         rs.getInt("branch_id")
                 );
                 loans.add(loan);
+                System.out.println("Retrieved loan: ID=" + loan.getLoanId() +
+                        ", Customer ID=" + loan.getCustId() +
+                        ", Amount=" + loan.getAmount());
             }
+
+            System.out.println("Total loans retrieved: " + count);
+
         } catch (SQLException e) {
             System.err.println("Error retrieving loans: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return loans;
     }
+
+
 
 
     public boolean deleteCustomer(Long customerId) {

@@ -1,0 +1,3 @@
+db.URL=jdbc:mysql://localhost:3306/your_database_name
+db.USER=your_username
+db.PASSWORD=your_password

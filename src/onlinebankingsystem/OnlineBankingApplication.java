@@ -2,6 +2,7 @@ package onlinebankingsystem;
 
 import javafx.application.Application;
 import javafx.collections.FXCollections;
+import java.util.List;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,7 +11,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import java.util.List;
+
 
 public class OnlineBankingApplication extends Application {
 
@@ -518,11 +519,13 @@ public class OnlineBankingApplication extends Application {
     private List<LoanWithCustomerInfo> getAllLoansWithCustomerInfo() {
         List<LoanWithCustomerInfo> result = FXCollections.observableArrayList();
 
-        // Get all loans from database
-        List<Loan> loans = dbService.getAllLoans();
+        // Get all loans from database with debugging
+        System.out.println("Fetching all loans for manager UI...");
+        List<Loan> loansList = dbService.getAllLoans();
+        System.out.println("Retrieved " + loansList.size() + " loans to process");
 
-        // For each loan, get customer info and create LoanWithCustomerInfo object
-        for (Loan loan : loans) {
+        // For each loan, get customer info
+        for (Loan loan : loansList) {
             Customer customer = dbService.getCustomerById(loan.getCustId());
             if (customer != null) {
                 String customerName = customer.getFirstName() + " " + customer.getLastName();
@@ -534,12 +537,20 @@ public class OnlineBankingApplication extends Application {
                         loan.getBranchId()
                 );
                 result.add(loanInfo);
+                System.out.println("Added loan with customer info: " + loanInfo.getLoanId() +
+                        ", Customer: " + customerName);
+            } else {
+                System.out.println("WARNING: Could not find customer with ID " + loan.getCustId() +
+                        " for loan " + loan.getLoanId());
             }
         }
 
+        System.out.println("Returning " + result.size() + " loans with customer info");
         return result;
     }
-    
+
+
+
 
     // Method to delete a customer
     private void deleteCustomer(Customer customer) {
