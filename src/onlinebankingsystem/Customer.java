@@ -9,7 +9,6 @@ public class Customer {
     private String password;
 
 
-    // Constructor
     public Customer(Long id, String firstName, String lastName, int phone, String uid, String password) {
         this.id = id;
         this.firstName = firstName;
@@ -20,7 +19,6 @@ public class Customer {
     }
 
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
