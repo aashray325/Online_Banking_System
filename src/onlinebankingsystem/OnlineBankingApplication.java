@@ -567,7 +567,7 @@ public class OnlineBankingApplication extends Application {
                     customerTable.getItems().remove(customer);
                     showAlert("Customer deleted successfully");
                 } else {
-                    showAlert("Failed to delete customer. They may have active accounts or loans.");
+                    showAlert("Failed to delete customer.");
                 }
             }
         });

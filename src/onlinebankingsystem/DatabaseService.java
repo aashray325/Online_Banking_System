@@ -26,7 +26,6 @@ public class DatabaseService {
     private void loadDatabaseProperties() {
         Properties props = new Properties();
         try {
-            // First try to load from the project root directory
             File configFile = new File("config.properties");
             if (configFile.exists()) {
                 try (FileInputStream fis = new FileInputStream(configFile)) {
@@ -34,7 +33,6 @@ public class DatabaseService {
                     System.out.println("Loaded config from file: " + configFile.getAbsolutePath());
                 }
             } else {
-                // Fallback to classpath resource (useful for tests or when running from JAR)
                 try (InputStream is = getClass().getClassLoader().getResourceAsStream("config.properties")) {
                     if (is != null) {
                         props.load(is);
@@ -50,31 +48,16 @@ public class DatabaseService {
             this.USER = props.getProperty("db.USER");
             this.PASSWORD = props.getProperty("db.PASSWORD");
 
-            // Log loaded properties (for debugging, remove in production)
-            System.out.println("Database URL: " + this.URL);
-            System.out.println("Database User: " + this.USER);
-            // Don't log the password!
-
-            // Check if properties were loaded
             if (this.URL == null || this.USER == null || this.PASSWORD == null) {
                 System.err.println("One or more database properties not found in config file");
-                // Fallback to hardcoded values for development only (remove in production)
-                this.URL = "jdbc:mysql://localhost:3306/online_banking_system";
-                this.USER = "root";
-                this.PASSWORD = ""; // Don't include your real password here
             }
         } catch (IOException e) {
             System.err.println("Failed to load database properties: " + e.getMessage());
             e.printStackTrace();
-            // Fallback to hardcoded values for development only
-            this.URL = "jdbc:mysql://localhost:3306/online_banking_system";
-            this.USER = "root";
-            this.PASSWORD = ""; // Don't include your real password here
         }
     }
 
 
-    // Get connection to database
     private Connection getConnection() throws SQLException {
         try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
@@ -84,7 +67,6 @@ public class DatabaseService {
         }
     }
 
-    // Customer methods
     public List<Customer> getAllCustomers() {
         List<Customer> customers = new ArrayList<>();
 
@@ -135,7 +117,7 @@ public class DatabaseService {
     }
 
     public boolean registerCustomer(String firstName, String lastName, int phone, String password) {
-        // Call the new method with an initial balance of 0
+
         return registerCustomerWithInitialBalance(firstName, lastName, phone, password, 0);
     }
 

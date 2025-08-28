@@ -1,4 +1,6 @@
-CREATE DATABASE IF NOT EXISTS online_banking_system;
+-- Fixed SQL script with corrected procedures
+DROP DATABASE IF EXISTS online_banking_system;
+CREATE DATABASE online_banking_system;
 USE online_banking_system;
 
 -- Create auth_users table
@@ -6,13 +8,14 @@ CREATE TABLE IF NOT EXISTS auth_users (
     id VARCHAR(36) PRIMARY KEY
 );
 
--- Create customers table
+-- Create customers table with password field
 CREATE TABLE IF NOT EXISTS customers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     phone INT UNIQUE,
     uid VARCHAR(36) UNIQUE,
+    password VARCHAR(255) NOT NULL,
     FOREIGN KEY (uid) REFERENCES auth_users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
@@ -47,33 +50,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (toID) REFERENCES account(account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-USE online_banking_system;
-
--- Insert sample data into auth_users table
-INSERT INTO auth_users (id) VALUES ('uid1');
-INSERT INTO auth_users (id) VALUES ('uid2');
-INSERT INTO auth_users (id) VALUES ('uid3');
-
--- Insert sample data into customers table
-INSERT INTO customers (id, first_name, last_name, phone, uid) VALUES (1, 'John', 'Doe', 1234567890, 'uid1');
-INSERT INTO customers (id, first_name, last_name, phone, uid) VALUES (2, 'Jane', 'Smith', 9876543210, 'uid2');
-INSERT INTO customers (id, first_name, last_name, phone, uid) VALUES (3, 'Alice', 'Brown', 1122334455, 'uid3');
-
--- Insert sample data into account table
-INSERT INTO account (account_id, customer_id, balance, status, type) VALUES (101, 1, 5000, 'active', 'savings');
-INSERT INTO account (account_id, customer_id, balance, status, type) VALUES (102, 2, 10000, 'active', 'checking');
-INSERT INTO account (account_id, customer_id, balance, status, type) VALUES (103, 3, 7500, 'inactive', 'loan');
-
--- Insert sample data into loans table
-INSERT INTO loans (loan_id, cust_id, amount, branch_id) VALUES (201, 1, 20000, 1);
-INSERT INTO loans (loan_id, cust_id, amount, branch_id) VALUES (202, 2, 15000, 2);
-
--- Insert sample data into transactions table
-INSERT INTO transactions (trans_id, type, fromID, toID, amount) VALUES (301, 'transfer', 101, 102, 1000);
-INSERT INTO transactions (trans_id, type, fromID, toID, amount) VALUES (302, 'deposit', NULL, 101, 2000);
-
-USE online_banking_system;
-
 -- Stored Procedure for TransferFunds
 DELIMITER //
 CREATE PROCEDURE TransferFunds(
@@ -83,7 +59,7 @@ CREATE PROCEDURE TransferFunds(
 )
 BEGIN
     START TRANSACTION;
-
+    
     SELECT balance INTO @fromBalance FROM account WHERE account_id = fromAccountId FOR UPDATE;
     IF @fromBalance IS NULL OR @fromBalance < transferAmount THEN
         ROLLBACK;
@@ -114,11 +90,12 @@ CREATE PROCEDURE CreateNewCustomer(
     IN firstName VARCHAR(255),
     IN lastName VARCHAR(255),
     IN phoneNum INT,
-    IN userUid VARCHAR(36)
+    IN userUid VARCHAR(36),
+    IN userPassword VARCHAR(255)
 )
 BEGIN
-    INSERT INTO customers (first_name, last_name, phone, uid)
-    VALUES (firstName, lastName, phoneNum, userUid);
+    INSERT INTO customers (first_name, last_name, phone, uid, password)
+    VALUES (firstName, lastName, phoneNum, userUid, userPassword);
 END //
 DELIMITER ;
 
@@ -153,9 +130,9 @@ DELIMITER ;
 -- Function to Get Account Balance
 DELIMITER //
 CREATE FUNCTION GetAccountBalance(accountId BIGINT)
-RETURNS BIGINT
-DETERMINISTIC
-READS SQL DATA
+    RETURNS BIGINT
+    DETERMINISTIC
+    READS SQL DATA
 BEGIN
     DECLARE currentBalance BIGINT;
     SELECT balance INTO currentBalance FROM account WHERE account_id = accountId;
