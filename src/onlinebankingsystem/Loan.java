@@ -6,7 +6,6 @@ public class Loan {
     private Long amount;
     private Integer branchId;
 
-    // Constructor
     public Loan(Long loanId, Long custId, Long amount, Integer branchId) {
         this.loanId = loanId;
         this.custId = custId;
@@ -14,7 +13,6 @@ public class Loan {
         this.branchId = branchId;
     }
 
-    // Getters and Setters
     public Long getLoanId() { return loanId; }
     public void setLoanId(Long loanId) { this.loanId = loanId; }
 
