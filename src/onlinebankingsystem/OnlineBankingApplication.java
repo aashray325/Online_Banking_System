@@ -15,17 +15,14 @@ import javafx.stage.Stage;
 
 public class OnlineBankingApplication extends Application {
 
-    // UI Components
     private Stage primaryStage;
     private TableView<Customer> customerTable;
     private TableView<Account> accountTable;
     private TableView<Transaction> transactionTable;
     private TableView<Loan> loanTable;
 
-    // Current customer ID for operations
     private Long currentCustomerId;
 
-    // Database service
     private DatabaseService dbService;
 
     public static void main(String[] args) {
@@ -37,14 +34,12 @@ public class OnlineBankingApplication extends Application {
         this.primaryStage = primaryStage;
         this.dbService = new DatabaseService();
 
-        // Start with login screen
         showLoginScreen();
 
         primaryStage.setTitle("Online Banking System");
         primaryStage.show();
     }
 
-    // ==================== UI SCREENS ====================
 
     private void showSignUpForm() {
         SignUpForm signUpForm = new SignUpForm(dbService);
@@ -52,7 +47,6 @@ public class OnlineBankingApplication extends Application {
     }
 
     private void showLoginScreen() {
-        // Create simple login for demo purposes (admin and customer)
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
         grid.setHgap(10);
@@ -101,7 +95,6 @@ public class OnlineBankingApplication extends Application {
         });
 
 
-
         Button customerBtn = new Button("Customer Login");
         customerBtn.setOnAction(e -> {
             Customer selected = customerSelect.getValue();
@@ -145,7 +138,6 @@ public class OnlineBankingApplication extends Application {
 
         TabPane tabPane = new TabPane();
 
-        // Accounts Tab
         Tab accountsTab = new Tab("Accounts");
         accountsTab.setClosable(false);
 
@@ -165,11 +157,9 @@ public class OnlineBankingApplication extends Application {
 
         accountTable.getColumns().addAll(accountIdCol, accountTypeCol, balanceCol, statusCol);
 
-        // Load customer accounts
         List<Account> accounts = dbService.getAccountsByCustomerId(customer.getId());
         accountTable.setItems(FXCollections.observableArrayList(accounts));
 
-        // Transfer money form
         GridPane transferForm = new GridPane();
         transferForm.setHgap(10);
         transferForm.setVgap(10);
@@ -196,7 +186,6 @@ public class OnlineBankingApplication extends Application {
                     boolean success = dbService.transferFunds(fromAccount.getAccountId(), toAccountId, amount);
                     if (success) {
                         showAlert("Transfer successful!");
-                        // Refresh accounts
                         List<Account> updatedAccounts = dbService.getAccountsByCustomerId(customer.getId());
                         accountTable.setItems(FXCollections.observableArrayList(updatedAccounts));
                     } else {
@@ -230,7 +219,6 @@ public class OnlineBankingApplication extends Application {
 
         accountsTab.setContent(accountsBox);
 
-        // Transactions Tab
         Tab transactionsTab = new Tab("Transactions");
         transactionsTab.setClosable(false);
 
@@ -278,7 +266,6 @@ public class OnlineBankingApplication extends Application {
 
         transactionsTab.setContent(transactionsBox);
 
-        // Loans Tab
         Tab loansTab = new Tab("Loans");
         loansTab.setClosable(false);
 
@@ -295,11 +282,9 @@ public class OnlineBankingApplication extends Application {
 
         loanTable.getColumns().addAll(loanIdCol, loanAmountCol, branchCol);
 
-        // Load customer loans
         List<Loan> loans = dbService.getLoansByCustomerId(customer.getId());
         loanTable.setItems(FXCollections.observableArrayList(loans));
 
-        // Apply for loan form
         GridPane loanForm = new GridPane();
         loanForm.setHgap(10);
         loanForm.setVgap(10);
@@ -321,7 +306,6 @@ public class OnlineBankingApplication extends Application {
                     boolean success = dbService.takeLoan(customer.getId(), amount, branchId);
                     if (success) {
                         showAlert("Loan application successful!");
-                        // Refresh loans
                         List<Loan> updatedLoans = dbService.getLoansByCustomerId(customer.getId());
                         loanTable.setItems(FXCollections.observableArrayList(updatedLoans));
                     } else {
@@ -353,10 +337,8 @@ public class OnlineBankingApplication extends Application {
 
         loansTab.setContent(loansBox);
 
-        // Add tabs to tab pane
         tabPane.getTabs().addAll(accountsTab, transactionsTab, loansTab);
 
-        // Logout button
         Button logoutBtn = new Button("Logout");
         logoutBtn.setOnAction(e -> showLoginScreen());
 
@@ -373,7 +355,6 @@ public class OnlineBankingApplication extends Application {
         BorderPane borderPane = new BorderPane();
         TabPane tabPane = new TabPane();
 
-        // ========== CUSTOMERS TAB ==========
         Tab customersTab = new Tab("Customers");
         customersTab.setClosable(false);
 
@@ -397,7 +378,6 @@ public class OnlineBankingApplication extends Application {
 
         customerTable.getColumns().addAll(idCol, firstNameCol, lastNameCol, phoneCol, passwordCol);
 
-        // Load all customers
         List<Customer> customers = dbService.getAllCustomers();
         customerTable.setItems(FXCollections.observableArrayList(customers));
 
@@ -407,7 +387,6 @@ public class OnlineBankingApplication extends Application {
             customerTable.setItems(FXCollections.observableArrayList(refreshedCustomers));
         });
 
-        // Add delete customer button
         Button deleteCustomerBtn = new Button("Delete Selected Customer");
         deleteCustomerBtn.setOnAction(e -> {
             Customer selectedCustomer = customerTable.getSelectionModel().getSelectedItem();
@@ -430,11 +409,9 @@ public class OnlineBankingApplication extends Application {
 
         customersTab.setContent(customersBox);
 
-        // ========== LOANS TAB ==========
         Tab loansTab = new Tab("Loans Management");
         loansTab.setClosable(false);
 
-        // Create table for loans with customer info
         TableView<LoanWithCustomerInfo> loanTable = new TableView<>();
 
         TableColumn<LoanWithCustomerInfo, Long> loanIdCol = new TableColumn<>("Loan ID");
@@ -451,7 +428,6 @@ public class OnlineBankingApplication extends Application {
 
         loanTable.getColumns().addAll(loanIdCol, customerNameCol, amountCol, branchIdCol);
 
-        // Load loans with customer info
         List<LoanWithCustomerInfo> loansWithInfo = getAllLoansWithCustomerInfo();
         loanTable.setItems(FXCollections.observableArrayList(loansWithInfo));
 
@@ -471,10 +447,8 @@ public class OnlineBankingApplication extends Application {
 
         loansTab.setContent(loansBox);
 
-        // Add tabs to tab pane
         tabPane.getTabs().addAll(customersTab, loansTab);
 
-        // Logout button
         Button logoutBtn = new Button("Logout");
         logoutBtn.setOnAction(e -> showLoginScreen());
 
@@ -491,7 +465,6 @@ public class OnlineBankingApplication extends Application {
         primaryStage.setTitle("Admin Dashboard");
     }
 
-    // Class to hold loan information with customer details
     private static class LoanWithCustomerInfo {
         private Long loanId;
         private Long customerId;
@@ -507,7 +480,6 @@ public class OnlineBankingApplication extends Application {
             this.branchId = branchId;
         }
 
-        // Getters (needed for TableView)
         public Long getLoanId() { return loanId; }
         public Long getCustomerId() { return customerId; }
         public String getCustomerName() { return customerName; }
@@ -515,16 +487,13 @@ public class OnlineBankingApplication extends Application {
         public Integer getBranchId() { return branchId; }
     }
 
-    // Helper method to get all loans with customer information
     private List<LoanWithCustomerInfo> getAllLoansWithCustomerInfo() {
         List<LoanWithCustomerInfo> result = FXCollections.observableArrayList();
 
-        // Get all loans from database with debugging
         System.out.println("Fetching all loans for manager UI...");
         List<Loan> loansList = dbService.getAllLoans();
         System.out.println("Retrieved " + loansList.size() + " loans to process");
 
-        // For each loan, get customer info
         for (Loan loan : loansList) {
             Customer customer = dbService.getCustomerById(loan.getCustId());
             if (customer != null) {
@@ -552,7 +521,6 @@ public class OnlineBankingApplication extends Application {
 
 
 
-    // Method to delete a customer
     private void deleteCustomer(Customer customer) {
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirm Delete");
