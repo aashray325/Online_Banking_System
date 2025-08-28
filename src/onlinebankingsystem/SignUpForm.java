@@ -82,7 +82,6 @@ public class SignUpForm extends JFrame {
         String password = new String(passwordField.getPassword());
         String confirmPassword = new String(confirmPasswordField.getPassword());
 
-        // Basic validation
         if (firstName.isEmpty() || lastName.isEmpty() || phoneStr.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this, "All fields are required", "Error", JOptionPane.ERROR_MESSAGE);
             return;
