@@ -1,14 +1,11 @@
--- Fixed SQL script with corrected procedures
 DROP DATABASE IF EXISTS online_banking_system;
 CREATE DATABASE online_banking_system;
 USE online_banking_system;
 
--- Create auth_users table
 CREATE TABLE IF NOT EXISTS auth_users (
     id VARCHAR(36) PRIMARY KEY
 );
 
--- Create customers table with password field
 CREATE TABLE IF NOT EXISTS customers (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(255) NOT NULL,
@@ -19,7 +16,6 @@ CREATE TABLE IF NOT EXISTS customers (
     FOREIGN KEY (uid) REFERENCES auth_users(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Create account table
 CREATE TABLE IF NOT EXISTS account (
     account_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     customer_id BIGINT NOT NULL,
@@ -29,7 +25,6 @@ CREATE TABLE IF NOT EXISTS account (
     FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
--- Create loans table
 CREATE TABLE IF NOT EXISTS loans (
     loan_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cust_id BIGINT NOT NULL,
@@ -38,7 +33,6 @@ CREATE TABLE IF NOT EXISTS loans (
     FOREIGN KEY (cust_id) REFERENCES customers(id)
 );
 
--- Create transactions table
 CREATE TABLE IF NOT EXISTS transactions (
     trans_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     type VARCHAR(255) NOT NULL,
@@ -50,7 +44,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     FOREIGN KEY (toID) REFERENCES account(account_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
--- Stored Procedure for TransferFunds
 DELIMITER //
 CREATE PROCEDURE TransferFunds(
     IN fromAccountId BIGINT,
@@ -84,7 +77,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Stored Procedure for CreateNewCustomer
 DELIMITER //
 CREATE PROCEDURE CreateNewCustomer(
     IN firstName VARCHAR(255),
@@ -99,7 +91,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Stored Procedure for TakeLoan
 DELIMITER //
 CREATE PROCEDURE TakeLoan(
     IN customerId BIGINT,
@@ -127,7 +118,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Function to Get Account Balance
 DELIMITER //
 CREATE FUNCTION GetAccountBalance(accountId BIGINT)
     RETURNS BIGINT
