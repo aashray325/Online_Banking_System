@@ -43,7 +43,6 @@ public class DatabaseService {
                 }
             }
 
-            // Load the properties
             this.URL = props.getProperty("db.URL");
             this.USER = props.getProperty("db.USER");
             this.PASSWORD = props.getProperty("db.PASSWORD");
@@ -121,7 +120,6 @@ public class DatabaseService {
         return registerCustomerWithInitialBalance(firstName, lastName, phone, password, 0);
     }
 
-    // Account methods
     public List<Account> getAccountsByCustomerId(Long customerId) {
         List<Account> accounts = new ArrayList<>();
 
@@ -158,7 +156,7 @@ public class DatabaseService {
 
         try {
             conn = getConnection();
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false); 
 
 
             String uid = java.util.UUID.randomUUID().toString();
@@ -175,7 +173,7 @@ public class DatabaseService {
             customerStmt.setString(2, lastName);
             customerStmt.setInt(3, phone);
             customerStmt.setString(4, uid);
-            customerStmt.setString(5, password); // In a real app, hash this password
+            customerStmt.setString(5, password); 
 
             int affectedRows = customerStmt.executeUpdate();
             long customerId = -1;
@@ -196,7 +194,7 @@ public class DatabaseService {
                 String accountSql = "INSERT INTO account (customer_id, balance, status, type) VALUES (?, ?, ?, ?)";
                 accountStmt = conn.prepareStatement(accountSql, Statement.RETURN_GENERATED_KEYS);
                 accountStmt.setLong(1, customerId);
-                accountStmt.setLong(2, initialBalance);  // Set the initial balance here
+                accountStmt.setLong(2, initialBalance);  
                 accountStmt.setString(3, "active");
                 accountStmt.setString(4, "savings");
 
@@ -204,7 +202,7 @@ public class DatabaseService {
                 long accountId = -1;
 
                 if (accountRows > 0) {
-                    generatedKeys.close();  // Close previous ResultSet
+                    generatedKeys.close(); 
                     generatedKeys = accountStmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         accountId = generatedKeys.getLong(1);
@@ -216,7 +214,7 @@ public class DatabaseService {
                         String transactionSql = "INSERT INTO transactions (type, toID, amount) VALUES (?, ?, ?)";
                         transactionStmt = conn.prepareStatement(transactionSql);
                         transactionStmt.setString(1, "initial_deposit");
-                        transactionStmt.setLong(2, accountId);  // Use the account ID for the toID field
+                        transactionStmt.setLong(2, accountId);  
                         transactionStmt.setLong(3, initialBalance);
 
                         transactionStmt.executeUpdate();
@@ -231,7 +229,6 @@ public class DatabaseService {
             conn.commit();
             return true;
         } catch (SQLException e) {
-            // If something goes wrong, roll back the transaction
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -250,7 +247,7 @@ public class DatabaseService {
                 if (customerStmt != null) customerStmt.close();
                 if (authStmt != null) authStmt.close();
                 if (conn != null) {
-                    conn.setAutoCommit(true); // Reset auto commit
+                    conn.setAutoCommit(true); 
                     conn.close();
                 }
             } catch (SQLException e) {
@@ -260,7 +257,6 @@ public class DatabaseService {
     }
 
 
-    // Transaction methods
     public List<Transaction> getTransactionsByAccountId(Long accountId) {
         List<Transaction> transactions = new ArrayList<>();
 
@@ -289,7 +285,6 @@ public class DatabaseService {
         return transactions;
     }
 
-    // Transfer funds using stored procedure
     public boolean transferFunds(Long fromAccountId, Long toAccountId, Long amount) {
         try (Connection conn = getConnection();
              CallableStatement cstmt = conn.prepareCall("{CALL TransferFunds(?, ?, ?)}")) {
@@ -306,7 +301,6 @@ public class DatabaseService {
         }
     }
 
-    // Loan methods
     public List<Loan> getLoansByCustomerId(Long customerId) {
         List<Loan> loans = new ArrayList<>();
 
@@ -333,7 +327,6 @@ public class DatabaseService {
     }
 
     public boolean takeLoan(Long customerId, Long amount, Integer branchId) {
-        // First check if customer has a loan account, create one if not
         boolean loanAccountExists = false;
 
         try (Connection conn = getConnection();
@@ -344,7 +337,6 @@ public class DatabaseService {
             ResultSet rs = pstmt.executeQuery();
             loanAccountExists = rs.next();
 
-            // If no loan account exists, create one
             if (!loanAccountExists) {
                 System.out.println("No loan account found for customer " + customerId + ". Creating one.");
                 try (PreparedStatement createStmt = conn.prepareStatement(
@@ -360,7 +352,6 @@ public class DatabaseService {
             return false;
         }
 
-        // Now proceed with taking the loan
         try (Connection conn = getConnection();
              CallableStatement cstmt = conn.prepareCall("{CALL TakeLoan(?, ?, ?)}")) {
 
@@ -374,7 +365,6 @@ public class DatabaseService {
         } catch (SQLException e) {
             System.err.println("Error taking loan: " + e.getMessage());
 
-            // Check for specific error conditions from the stored procedure
             if (e.getMessage().contains("No LOAN account found")) {
                 System.err.println("No loan account found for the customer despite our attempt to create one");
             } else if (e.getMessage().contains("Invalid customer ID")) {
@@ -423,8 +413,6 @@ public class DatabaseService {
     }
 
 
-
-
     public boolean deleteCustomer(Long customerId) {
         Connection conn = null;
         PreparedStatement accountStmt = null;
@@ -435,7 +423,7 @@ public class DatabaseService {
 
         try {
             conn = getConnection();
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false);
 
             String getUidSql = "SELECT uid FROM customers WHERE id = ?";
             PreparedStatement getUidStmt = conn.prepareStatement(getUidSql);
@@ -446,7 +434,6 @@ public class DatabaseService {
             if (rs.next()) {
                 uid = rs.getString("uid");
             } else {
-                // Customer not found
                 conn.rollback();
                 return false;
             }
@@ -488,7 +475,6 @@ public class DatabaseService {
             return customerRows > 0;
 
         } catch (SQLException e) {
-            // If something goes wrong, roll back the transaction
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -507,7 +493,7 @@ public class DatabaseService {
                 if (customerStmt != null) customerStmt.close();
                 if (authStmt != null) authStmt.close();
                 if (conn != null) {
-                    conn.setAutoCommit(true); // Reset auto commit
+                    conn.setAutoCommit(true); 
                     conn.close();
                 }
             } catch (SQLException e) {
