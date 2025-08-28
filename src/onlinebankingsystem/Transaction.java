@@ -7,7 +7,6 @@ public class Transaction {
     private Long toID;
     private Long amount;
 
-    // Constructor
     public Transaction(Long transId, String type, Long fromID, Long toID, Long amount) {
         this.transId = transId;
         this.type = type;
@@ -16,7 +15,6 @@ public class Transaction {
         this.amount = amount;
     }
 
-    // Getters and Setters
     public Long getTransId() { return transId; }
     public void setTransId(Long transId) { this.transId = transId; }
 
