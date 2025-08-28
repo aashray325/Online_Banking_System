@@ -7,7 +7,6 @@ public class Account {
     private String status;
     private String type;
 
-    // Constructor
     public Account(Long accountId, Long customerId, Long balance, String status, String type) {
         this.accountId = accountId;
         this.customerId = customerId;
@@ -16,7 +15,6 @@ public class Account {
         this.type = type;
     }
 
-    // Getters and Setters
     public Long getAccountId() { return accountId; }
     public void setAccountId(Long accountId) { this.accountId = accountId; }
 
